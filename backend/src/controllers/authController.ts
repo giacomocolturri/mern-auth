@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { User } from "../models/userModel";
 import { sendEmail } from "../utils/email";
+import { generateToken } from "../utils/jwt";
+import { generateOtp } from "../utils/otp";
+import { ObjectId } from "mongoose";
 
 export const register = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { name, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -13,22 +15,25 @@ export const register = async (req: Request, res: Response) => {
       return;
     }
 
-    const user = new User({ email, password });
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    const user = new User({ name, email, password });
+
+    const otp = generateOtp();
+    user.otp = otp.value;
+    user.otpExpires = otp.expiresAt;
+
     await user.save();
 
     await sendEmail({
       to: email,
       subject: "Verify your email",
-      text: `Your OTP is: ${otp}`,
+      text: `Your OTP is: ${otp.value}`,
     });
 
     res.status(201).json({
       message: "User registered. Verify your email to activate your account.",
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -47,13 +52,7 @@ export const login = async (req: Request, res: Response) => {
       return;
     }
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET!,
-      {
-        expiresIn: "1h",
-      }
-    );
+    const token = generateToken(user._id as ObjectId, user.email);
 
     res.status(200).json({ token });
   } catch (err) {
@@ -64,10 +63,12 @@ export const login = async (req: Request, res: Response) => {
 export const logout = (_req: Request, res: Response) => {
   res.status(200).json({ message: "Logged out successfully" });
 };
+
 export const verifyOtp = async (req: Request, res: Response) => {
   const { email, otp } = req.body;
   try {
     const user = await User.findOne({ email });
+
     if (!user || user.otp !== otp || user.otpExpires! < new Date()) {
       res.status(400).json({ message: "Invalid or expired OTP" });
       return;
@@ -76,6 +77,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
     user.verified = true;
     user.otp = undefined;
     user.otpExpires = undefined;
+
     await user.save();
 
     res.status(200).json({ message: "Email verified successfully" });
@@ -93,15 +95,16 @@ export const requestResetPassword = async (req: Request, res: Response) => {
       return;
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    const otp = generateOtp();
+    user.otp = otp.value;
+    user.otpExpires = otp.expiresAt;
+
     await user.save();
 
     await sendEmail({
       to: email,
       subject: "Reset Password OTP",
-      text: `Your OTP is: ${otp}`,
+      text: `Your OTP is: ${otp.value}`,
     });
 
     res.status(200).json({ message: "OTP sent to email" });
@@ -122,15 +125,11 @@ export const resetPassword = async (req: Request, res: Response) => {
     user.password = newPassword;
     user.otp = undefined;
     user.otpExpires = undefined;
+
     await user.save();
 
     res.status(200).json({ message: "Password reset successfully" });
   } catch (err) {
     res.status(500).json({ message: "Internal server error" });
   }
-};
-
-export const protectedRoute = (req: Request, res: Response) => {
-  console.log(req.body.userId);
-  res.status(200).json({ message: "You have accessed a protected route" });
 };

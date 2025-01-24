@@ -9,7 +9,7 @@ interface Options {
 
 export const sendEmail = async (options: Options) => {
   await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_FROM,
     to: options.to,
     subject: options.subject,
     text: options.text,

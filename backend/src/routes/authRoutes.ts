@@ -6,7 +6,6 @@ import {
   logout,
   requestResetPassword,
   resetPassword,
-  protectedRoute,
 } from "../controllers/authController";
 import {
   registerSchema,
@@ -29,6 +28,5 @@ router.post(
   validate(resetPasswordSchema),
   resetPassword
 );
-router.get("/protected", verifyToken, protectedRoute);
 
 export default router;

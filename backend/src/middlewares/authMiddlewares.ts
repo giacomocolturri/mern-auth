@@ -7,6 +7,7 @@ export const verifyToken = (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
+
   if (!authHeader) {
     res.status(401).send("Access Denied");
     return;
@@ -22,12 +23,14 @@ export const verifyToken = (
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
 
-    if (typeof decoded !== "object" || !decoded?.userId) {
+    if (typeof decoded !== "object" || !decoded?.email || !decoded?.userId) {
       res.status(401).json({ error: "Access denied" });
       return;
     }
 
-    req.userId = decoded.userId;
+    req.body.email = decoded.email;
+    req.body.userId = decoded.userId;
+
     next();
   } catch (error) {
     res.status(400).send("Invalid Token");
