@@ -1,5 +1,11 @@
 import { assets } from "../assets/assets";
-import { IUser } from "../context/AuthContextDefinition";
+
+// TODO : remove
+interface IUser {
+  name: string;
+  email: string;
+  id: string;
+}
 
 const Header = () => {
   const user: IUser = { name: "John Doe", email: "", id: "" };

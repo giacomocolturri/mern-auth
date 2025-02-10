@@ -11,9 +11,9 @@ import {
   registerSchema,
   loginSchema,
   otpSchema,
+  requestResetPasswordSchema,
   resetPasswordSchema,
 } from "../schemas/authSchemas";
-import { verifyToken } from "../middlewares/authMiddlewares";
 import { validate } from "../middlewares/validationMiddlewares";
 
 const router = Router();
@@ -22,7 +22,11 @@ router.post("/register", validate(registerSchema), register);
 router.post("/verify-otp", validate(otpSchema), verifyOtp);
 router.post("/login", validate(loginSchema), login);
 router.post("/logout", logout);
-router.post("/reset-password", validate(otpSchema), requestResetPassword);
+router.post(
+  "/reset-password",
+  validate(requestResetPasswordSchema),
+  requestResetPassword
+);
 router.post(
   "/reset-password/confirm",
   validate(resetPasswordSchema),

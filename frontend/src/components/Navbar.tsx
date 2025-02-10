@@ -1,6 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
-import { IUser } from "../context/AuthContextDefinition";
+
+// TODO : to delete this interface
+interface IUser {
+  name: string;
+  email: string;
+  id: string;
+}
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -16,7 +22,7 @@ const Navbar = () => {
             <ul className="list-none m-0 p-2 bg-gray-100 text-sm">
               <li
                 className="py-1 px-2 hover:bg-gray-200 cursor-pointer"
-                onClick={() => navigate("/email-verify")}
+                onClick={() => navigate("/verify-otp")}
               >
                 Verify Email
               </li>
